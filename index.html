@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>Let's Chat</title>
+
+	<style>
+		@import url(http://fonts.googleapis.com/css?family=Bree+Serif);
+
+		body{
+			background-color: #bdc3c7;
+			width: 750px;
+			margin: 0 auto;
+			padding-top: 30px;
+			font-family: 'Bree Serif', serif;
+		}
+
+		#chatWindow{
+			height: 400px;
+			max-width: 360px;
+		}
+
+		#mainWrapper,#chatWrapper,#userWrapper,#namesWrapper,#chatWindow,input{
+			 border: 5px solid white; 
+		    -webkit-box-shadow: 
+		      inset 0 0 8px  rgba(0,0,0,0.1),
+		            0 0 16px rgba(0,0,0,0.1); 
+		    -moz-box-shadow: 
+		      inset 0 0 8px  rgba(0,0,0,0.1),
+		            0 0 16px rgba(0,0,0,0.1); 
+		    box-shadow: 
+		      inset 0 0 8px  rgba(0,0,0,0.1),
+		            0 0 16px rgba(0,0,0,0.1); 
+		    padding: 15px;
+		    background: rgba(255,255,255,0.5);
+		    margin: 0 0 10px 0;
+		}
+		#mainWrapper{
+			display: none;
+			float: left;
+		}
+		#chatWrapper{
+			float: left;
+			border: 1px solid #bdc3c7;
+			border-radius: 10px;
+			background: #ecf0f1;
+			
+		}
+
+		#userWrapper{
+			float: left;
+			background: #ecf0f1;
+			padding: 10px;
+			margin-left: 20px;
+			width: 150px;
+			max-height: 200px;
+		}
+		#users{
+			text-align: center;
+			color: #16a085;
+		}
+		#namesWrapper{
+			border: 1px #bdc3c7 solid;
+			border-radius: 10px;
+			background: #ecf0f1;
+			padding: 20px;
+			text-align: center;
+		
+			
+		}
+		#chatWindow{
+			max-height: 400px;
+			overflow-y: scroll;
+		}
+		input {
+		   font-family: 'Bree Serif', serif;
+		}
+		#error{
+			color: #c0392b;
+		}
+		.whisper{
+			color: gray;
+			font-style: italic;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="container">
+		<div id="namesWrapper">
+			<h2>Let's Chat</h2>
+			<p>Create Username</p>
+			<div id="error"></div>
+			<br>
+			<form id="usernameForm">
+				<input id="username" type="text" placeholder="Put your username" size="35">
+				<input type="submit" value="Submit">
+			</form>
+		</div>
+	
+
+		<div id="mainWrapper">
+			<h2>Let's Chat</h2>
+			<div id="chatWrapper">
+				<div id="chatWindow"></div>
+				<form id="messageForm">
+					<input id="message" type="text" placeholder="Type something...." size="35">
+					<input type="submit" value="Say it">
+				</form>
+			</div>
+
+			<div id="userWrapper">
+				<div id="users">
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+	<script src="http://code.jquery.com/jquery-latest.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script>
+		$(function () {
+			var socket = io.connect();
+			var $messageForm = $('#messageForm');
+			var $message = $('#message');
+			var $chat = $('#chatWindow');
+			var $person = $('#person')
+
+			var $usernameForm = $('#usernameForm');
+			var $users = $('#users');
+			var $username = $('#username');
+			var $error = $('#error');
+
+
+			$usernameForm.submit(function(e) {
+				e.preventDefault();
+				socket.emit('newuser', $username.val(), function(data) {
+					if(data){
+						$('#namesWrapper').hide();
+						$('#mainWrapper').show();
+					} else {
+						$error.html("Username is already taken.");
+					}
+				})
+				$username.val('');
+			});
+
+			socket.on('usernames', function (data) {
+				var online = '';
+				for(var i=0; i<data.length; i++) {
+					online += data[i] + '<br>'
+				}
+				$users.html(online);
+			});
+
+			$messageForm.submit(function(e) {
+
+				e.preventDefault();
+				socket.emit('sendmessage', $message.val());
+				$message.val('');
+			});
+
+			socket.on('newmessage', function (data) {
+				$chat.append('<strong id="users">'+data.user+'</strong>: ' +  data.msg + '<br>');
+				$chat.scrollTop($chat.prop("scrollHeight")); 
+			});
+
+		});
+		
+	</script>
+</body>
+</html>
